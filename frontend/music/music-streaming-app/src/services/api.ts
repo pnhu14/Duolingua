@@ -23,7 +23,7 @@ export const api = {
   // Tìm kiếm bài hát theo tên
   async searchSongs(title: string): Promise<Song[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/search?title=${encodeURIComponent(title)}`)
+      const response = await fetch(`${API_BASE_URL}/songs?title=${encodeURIComponent(title)}`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
