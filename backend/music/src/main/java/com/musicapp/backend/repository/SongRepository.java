@@ -1,12 +1,17 @@
 package com.musicapp.backend.repository;
 
-import com.musicapp.backend.model.Song;
+import com.musicapp.backend.entity.Song;
+import java.util.List;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface SongRepository extends JpaRepository<Song, Long> {
-    List<Song> findSongByTitle(String title);
+
+  @EntityGraph(attributePaths = "artist")
+  List<Song> findAllByOrderByTitleAsc();
+
+  @EntityGraph(attributePaths = "artist")
+  List<Song> findByTitleContainingIgnoreCaseOrderByTitleAsc(String title);
 }
