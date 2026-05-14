@@ -1,0 +1,35 @@
+---
+description: Enforce English conventional commit messages for all git commits in this project
+alwaysApply: true
+---
+
+# Commit Conventions
+
+When the user asks you to create a git commit, always write the commit message in English and follow Conventional Commits.
+
+## Required format
+
+Use a type and optional scope, followed by a concise imperative summary:
+
+- `feat: add playlist track ordering`
+- `fix(backend): resolve Flyway seed mismatch`
+- `refactor(frontend): align song types with API`
+- `chore: update migration scripts`
+
+## Rules
+
+- The commit message must be in English.
+- Prefer lowercase commit types.
+- Use one of these types when appropriate: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `build`, `ci`, `perf`.
+- Keep the subject line short and specific.
+- Focus on the outcome, not implementation details.
+- Do not use vague messages like `update` or `changes`.
+- If there is a scope, keep it brief and relevant, such as `backend`, `frontend`, `db`, or `ci`.
+
+## Examples
+
+```text
+feat(backend): add UUID-based music schema
+fix(frontend): prevent blank screen on song cards
+chore(ci): add backend format check workflow
+```
