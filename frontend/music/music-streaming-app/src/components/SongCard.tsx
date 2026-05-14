@@ -14,6 +14,9 @@ export default function SongCard({ song, onPlay }: SongCardProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const artistName = song.artist?.name ?? 'Không rõ nghệ sĩ'
+  const imageUrl = song.coverUrl
+
   // Format date
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Chưa có thông tin'
@@ -29,9 +32,9 @@ export default function SongCard({ song, onPlay }: SongCardProps) {
     <div className="group relative bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
       {/* Image */}
       <div className="relative aspect-square overflow-hidden bg-gray-200 dark:bg-gray-700">
-        {song.imageUrl ? (
+        {imageUrl ? (
           <img
-            src={song.imageUrl}
+            src={imageUrl}
             alt={song.title}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
             onError={(e) => {
@@ -43,7 +46,7 @@ export default function SongCard({ song, onPlay }: SongCardProps) {
         ) : null}
 
         {/* Fallback icon */}
-        <div className={`${song.imageUrl ? 'hidden' : ''} absolute inset-0 flex items-center justify-center`}>
+        <div className={`${imageUrl ? 'hidden' : ''} absolute inset-0 flex items-center justify-center`}>
           <MusicalNoteIcon className="w-20 h-20 text-gray-400" />
         </div>
 
@@ -65,10 +68,11 @@ export default function SongCard({ song, onPlay }: SongCardProps) {
           {song.title}
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 truncate mb-2">
-          {song.artist.name}
+          {artistName}
         </p>
         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-500">
           <span>{formatDate(song.releaseDate)}</span>
+          <span>{formatDuration(song.durationSeconds)}</span>
         </div>
       </div>
     </div>

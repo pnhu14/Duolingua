@@ -58,7 +58,7 @@ export default function App() {
   const handlePlaySong = (song: Song) => {
     console.log('Playing song:', song)
     // TODO: Implement audio player
-    alert(`Đang phát: ${song.title} - ${song.artist.name}`)
+    alert(`Đang phát: ${song.title} - ${song.artist?.name ?? 'Không rõ nghệ sĩ'}`)
   }
 
   return (

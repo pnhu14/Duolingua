@@ -1,20 +1,23 @@
 // Types cho Music Streaming App
 
 export interface Artist {
-  id: number
+  id: string
   name: string
-  bio: string
-  imageUrl: string
+  slug: string
+  bio: string | null
+  imageUrl: string | null
   createdAt: string
 }
 
 export interface Song {
-  id: number
+  id: string
   title: string
-  audioUrl: string | null
-  imageUrl: string | null
+  slug: string
+  durationSeconds: number
+  audioUrl: string
+  coverUrl: string | null
   releaseDate: string | null
-  artist: Artist
+  artist: Artist | null
 }
 
 export interface ApiResponse {
