@@ -1,5 +1,3 @@
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-
 interface ErrorMessageProps {
   message: string
   onRetry?: () => void
@@ -7,24 +5,17 @@ interface ErrorMessageProps {
 
 export default function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4">
-      <div className="bg-red-50 dark:bg-red-900/20 rounded-full p-4 mb-4">
-        <ExclamationTriangleIcon className="w-12 h-12 text-red-500 dark:text-red-400" />
-      </div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-        Có lỗi xảy ra
-      </h3>
-      <p className="text-gray-600 dark:text-gray-400 text-center mb-4 max-w-md">
-        {message}
-      </p>
-      {onRetry && (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-4 py-12 text-center dark:border-red-900 dark:bg-red-950/40">
+      <h3 className="text-lg font-semibold text-red-700 dark:text-red-300">Đã có lỗi xảy ra</h3>
+      <p className="mt-2 max-w-md text-sm text-red-600 dark:text-red-200">{message}</p>
+      {onRetry ? (
         <button
           onClick={onRetry}
-          className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
+          className="mt-6 rounded-full bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
         >
           Thử lại
         </button>
-      )}
+      ) : null}
     </div>
   )
 }
