@@ -4,14 +4,19 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -20,26 +25,53 @@ import lombok.Setter;
 public class Song {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "song_id", nullable = false)
-  private Long id;
+  @GeneratedValue
+  @JdbcTypeCode(SqlTypes.UUID)
+  @Column(name = "song_id", nullable = false, updatable = false)
+  private UUID id;
 
-  @Column(name = "title", nullable = false)
+  @Column(name = "title", nullable = false, length = 255)
   private String title;
 
-  @Column(name = "duration")
-  private Integer duration;
+  @Column(name = "slug", nullable = false, length = 200, unique = true)
+  private String slug;
+
+  @Column(name = "duration_seconds", nullable = false)
+  private Integer durationSeconds;
 
   @Column(name = "release_date")
   private LocalDate releaseDate;
 
-  @Column(name = "audio_url", length = 512)
+  @Column(name = "audio_url", nullable = false, length = 512)
   private String audioUrl;
 
-  @Column(name = "image_url", length = 512)
-  private String imageUrl;
+  @Column(name = "cover_url", length = 512)
+  private String coverUrl;
+
+  @Column(name = "lyrics")
+  private String lyrics;
+
+  @Column(name = "explicit", nullable = false)
+  private boolean explicit;
+
+  @Column(name = "status", nullable = false, length = 32)
+  private String status;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "artist_id")
-  private Artist artist;
+  @JoinColumn(name = "album_id")
+  private Album album;
+
+  @Column(name = "track_number")
+  private Integer trackNumber;
+
+  @Column(name = "disc_number")
+  private Integer discNumber;
+
+  @CreationTimestamp
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private Instant createdAt;
+
+  @UpdateTimestamp
+  @Column(name = "updated_at", nullable = false)
+  private Instant updatedAt;
 }

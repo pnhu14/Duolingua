@@ -7,11 +7,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SongRepository extends JpaRepository<Song, Long> {
+public interface SongRepository extends JpaRepository<Song, java.util.UUID> {
 
-  @EntityGraph(attributePaths = "artist")
+  @EntityGraph(attributePaths = "album.primaryArtist")
   List<Song> findAllByOrderByTitleAsc();
 
-  @EntityGraph(attributePaths = "artist")
+  @EntityGraph(attributePaths = "album.primaryArtist")
   List<Song> findByTitleContainingIgnoreCaseOrderByTitleAsc(String title);
 }

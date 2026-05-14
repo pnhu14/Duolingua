@@ -13,11 +13,12 @@ public final class SongMapper {
     return new SongDto(
         song.getId(),
         song.getTitle(),
-        song.getDuration(),
+        song.getSlug(),
+        song.getDurationSeconds(),
         song.getAudioUrl(),
-        song.getImageUrl(),
+        song.getCoverUrl(),
         song.getReleaseDate(),
-        toArtistDto(song.getArtist()));
+        toArtistDto(song.getAlbum() == null ? null : song.getAlbum().getPrimaryArtist()));
   }
 
   private static ArtistDto toArtistDto(Artist artist) {
@@ -28,6 +29,7 @@ public final class SongMapper {
     return new ArtistDto(
         artist.getId(),
         artist.getName(),
+        artist.getSlug(),
         artist.getBio(),
         artist.getImageUrl(),
         artist.getCreatedAt());

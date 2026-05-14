@@ -1,12 +1,14 @@
 package com.musicapp.backend.dto;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record SongDto(
-    Long id,
+    UUID id,
     String title,
-    Integer duration,
+    String slug,
+    Integer durationSeconds,
     String audioUrl,
-    String imageUrl,
+    String coverUrl,
     LocalDate releaseDate,
     ArtistDto artist) {}
