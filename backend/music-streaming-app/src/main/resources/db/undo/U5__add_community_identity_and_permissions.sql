@@ -1,0 +1,18 @@
+BEGIN;
+
+DROP TABLE IF EXISTS artist_members CASCADE;
+DROP TABLE IF EXISTS role_permissions CASCADE;
+DROP TABLE IF EXISTS permissions CASCADE;
+DROP TABLE IF EXISTS user_profiles CASCADE;
+
+DELETE FROM user_roles
+WHERE role_id IN (
+    SELECT role_id
+    FROM roles
+    WHERE code IN ('USER', 'ARTIST', 'MODERATOR', 'ADMIN')
+);
+
+DELETE FROM roles
+WHERE code IN ('USER', 'ARTIST', 'MODERATOR', 'ADMIN');
+
+COMMIT;
