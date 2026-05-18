@@ -6,6 +6,10 @@ export interface Artist {
   slug: string
   bio: string | null
   imageUrl: string | null
+  bannerUrl: string | null
+  country: string | null
+  verified: boolean
+  status: string
   createdAt: string
 }
 
@@ -40,6 +44,32 @@ export interface SongDetail extends Song {
   lyrics: string | null
   explicit: boolean
   status: string
+}
+
+export interface ArtistPayload {
+  name: string
+  slug: string
+  bio?: string | null
+  imageUrl?: string | null
+  bannerUrl?: string | null
+  country?: string | null
+  verified?: boolean
+  status?: string
+}
+
+export interface SongPayload {
+  title: string
+  slug: string
+  durationSeconds: number
+  releaseDate?: string | null
+  audioUrl: string
+  coverUrl?: string | null
+  lyrics?: string | null
+  explicit?: boolean
+  status?: string
+  albumId?: string | null
+  trackNumber?: number | null
+  discNumber?: number | null
 }
 
 export interface ApiResponse {
