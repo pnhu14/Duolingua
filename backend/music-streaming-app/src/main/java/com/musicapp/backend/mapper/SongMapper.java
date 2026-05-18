@@ -1,8 +1,6 @@
 package com.musicapp.backend.mapper;
 
-import com.musicapp.backend.dto.ArtistDto;
 import com.musicapp.backend.dto.SongDto;
-import com.musicapp.backend.entity.Artist;
 import com.musicapp.backend.entity.Song;
 
 public final class SongMapper {
@@ -18,20 +16,6 @@ public final class SongMapper {
         song.getAudioUrl(),
         song.getCoverUrl(),
         song.getReleaseDate(),
-        toArtistDto(song.getAlbum() == null ? null : song.getAlbum().getPrimaryArtist()));
-  }
-
-  private static ArtistDto toArtistDto(Artist artist) {
-    if (artist == null) {
-      return null;
-    }
-
-    return new ArtistDto(
-        artist.getId(),
-        artist.getName(),
-        artist.getSlug(),
-        artist.getBio(),
-        artist.getImageUrl(),
-        artist.getCreatedAt());
+        ArtistMapper.toDto(song.getAlbum() == null ? null : song.getAlbum().getPrimaryArtist()));
   }
 }

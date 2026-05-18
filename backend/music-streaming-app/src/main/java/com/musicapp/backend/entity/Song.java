@@ -67,6 +67,9 @@ public class Song {
   @Column(name = "disc_number")
   private Integer discNumber;
 
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
