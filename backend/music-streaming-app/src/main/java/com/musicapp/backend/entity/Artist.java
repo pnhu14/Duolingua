@@ -50,6 +50,9 @@ public class Artist {
   @Column(name = "status", nullable = false, length = 32)
   private String status;
 
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
