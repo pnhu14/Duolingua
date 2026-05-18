@@ -1,13 +1,19 @@
-import { PlayIcon, MusicalNoteIcon } from '@heroicons/react/24/solid'
+import {
+  InformationCircleIcon,
+  MusicalNoteIcon,
+  PlayIcon,
+  UserCircleIcon,
+} from '@heroicons/react/24/solid'
 import type { Song } from '../types'
 
 interface SongCardProps {
   song: Song
   onPlay: (song: Song) => void
+  onOpenDetail?: (song: Song) => void
+  onOpenArtist?: (artistId: string) => void
 }
 
-const DEFAULT_COVER_STYLE =
-  'bg-gradient-to-br from-slate-800 via-indigo-900 to-blue-950'
+const DEFAULT_COVER_STYLE = 'bg-gradient-to-br from-slate-800 via-indigo-900 to-blue-950'
 
 function PlaceholderCover() {
   return (
@@ -30,7 +36,7 @@ function PlaceholderCover() {
   )
 }
 
-export default function SongCard({ song, onPlay }: SongCardProps) {
+export default function SongCard({ song, onPlay, onOpenDetail, onOpenArtist }: SongCardProps) {
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -53,40 +59,58 @@ export default function SongCard({ song, onPlay }: SongCardProps) {
   return (
     <div className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-gray-800">
       <div className="relative aspect-square overflow-hidden">
-        {imageUrl ? <img src={imageUrl} alt={song.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" /> : <PlaceholderCover />}
-
         {imageUrl ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-            <button
-              onClick={() => onPlay(song)}
-              className="rounded-full bg-green-500 p-4 text-white shadow-lg transition-transform duration-300 hover:bg-green-600 group-hover:scale-100"
-              aria-label={`Play ${song.title}`}
-            >
-              <PlayIcon className="h-8 w-8" />
-            </button>
-          </div>
+          <img
+            src={imageUrl}
+            alt={song.title}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-            <button
-              onClick={() => onPlay(song)}
-              className="rounded-full bg-white/15 p-4 text-white shadow-lg backdrop-blur-md transition-all duration-300 hover:bg-white/25 group-hover:scale-105"
-              aria-label={`Play ${song.title}`}
-            >
-              <PlayIcon className="h-8 w-8 drop-shadow-[0_0_14px_rgba(255,255,255,0.45)]" />
-            </button>
-          </div>
+          <PlaceholderCover />
         )}
+
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={() => onPlay(song)}
+            className="rounded-full bg-green-500 p-4 text-white shadow-lg transition-transform duration-300 hover:bg-green-600 group-hover:scale-105"
+            aria-label={`Phát ${song.title}`}
+          >
+            <PlayIcon className="h-8 w-8" />
+          </button>
+        </div>
       </div>
 
       <div className="p-4">
         <h3 className="mb-1 truncate text-lg font-semibold text-gray-900 dark:text-white">
           {song.title}
         </h3>
-        <p className="mb-2 truncate text-sm text-gray-600 dark:text-gray-400">{artistName}</p>
-        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-500">
-          <span>{formatDate(song.releaseDate)}</span>
+        {song.artist?.id && onOpenArtist ? (
+          <button
+            type="button"
+            onClick={() => onOpenArtist(song.artist!.id)}
+            className="mb-2 inline-flex max-w-full items-center gap-1 text-sm text-gray-600 transition-colors hover:text-green-600 dark:text-gray-400 dark:hover:text-green-300"
+          >
+            <UserCircleIcon className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{artistName}</span>
+          </button>
+        ) : (
+          <p className="mb-2 truncate text-sm text-gray-600 dark:text-gray-400">{artistName}</p>
+        )}
+        <div className="flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-500">
+          <span className="truncate">{formatDate(song.releaseDate)}</span>
           <span>{formatDuration(song.durationSeconds)}</span>
         </div>
+        {onOpenDetail ? (
+          <button
+            type="button"
+            onClick={() => onOpenDetail(song)}
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-green-300 hover:bg-green-50 hover:text-green-700 dark:border-gray-700 dark:text-gray-200 dark:hover:border-green-500/50 dark:hover:bg-green-500/10 dark:hover:text-green-300"
+          >
+            <InformationCircleIcon className="h-5 w-5" />
+            Chi tiết
+          </button>
+        ) : null}
       </div>
     </div>
   )

@@ -1,0 +1,19 @@
+import type { View } from '../types/navigation'
+
+export const hashToView = (): View => {
+  const hash = window.location.hash.replace(/^#\/?/, '')
+  const [section, id] = hash.split('/')
+
+  if (section === 'artists' && id) return { name: 'artistDetail', id }
+  if (section === 'artists') return { name: 'artists' }
+  if (section === 'songs' && id) return { name: 'songDetail', id }
+
+  return { name: 'home' }
+}
+
+export const viewToHash = (view: View) => {
+  if (view.name === 'artists') return '#/artists'
+  if (view.name === 'artistDetail') return `#/artists/${view.id}`
+  if (view.name === 'songDetail') return `#/songs/${view.id}`
+  return '#/'
+}
