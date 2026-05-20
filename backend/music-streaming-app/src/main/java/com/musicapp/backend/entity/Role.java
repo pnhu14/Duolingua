@@ -3,6 +3,7 @@ package com.musicapp.backend.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -17,7 +18,7 @@ import org.hibernate.annotations.CreationTimestamp;
 public class Role {
 
   @Id
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "role_id", nullable = false, updatable = false)
   private Long id;
 
