@@ -1,13 +1,26 @@
 import AppHeader from './components/AppHeader'
 import MiniPlayer from './components/MiniPlayer'
+import Sidebar from './components/Sidebar'
 import { useMusicApp } from './hooks/useMusicApp'
 import ArtistDetailView from './views/ArtistDetailView'
 import ArtistsView from './views/ArtistsView'
 import HomeView from './views/HomeView'
 import SongDetailView from './views/SongDetailView'
+import LoginView from './views/LoginView'
 
 export default function App() {
   const app = useMusicApp()
+
+  if (app.view.name === 'login') {
+    return (
+      <LoginView
+        onLogin={app.handleLogin}
+        onRegister={app.handleRegister}
+        isLoading={app.authLoading}
+        onNavigate={app.navigate}
+      />
+    )
+  }
 
   const renderView = () => {
     if (app.view.name === 'artists') {
@@ -60,31 +73,36 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-32 dark:from-gray-900 dark:to-gray-800">
-      <AppHeader
-        view={app.view}
-        songsCount={app.songs.length}
-        detailLoading={app.detailLoading}
-        onNavigate={app.navigate}
-        onSearch={app.handleSearch}
-      />
+    <div className="flex h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100 select-none">
+      {/* Left Sidebar */}
+      <Sidebar currentView={app.view} onNavigate={app.navigate} />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{renderView()}</main>
+      {/* Right Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-zinc-900/40 backdrop-blur-md">
+        <AppHeader
+          view={app.view}
+          songsCount={app.songs.length}
+          detailLoading={app.detailLoading}
+          onNavigate={app.navigate}
+          onSearch={app.handleSearch}
+          currentUser={app.currentUser}
+          onLogout={app.handleLogout}
+        />
 
-      <footer className="mt-12 border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-            © 2024 Music Streaming App. Made with React + Spring Boot
-          </p>
-        </div>
-      </footer>
+        <main className="flex-1 overflow-y-auto px-8 py-6 pb-24 scrollbar-thin">
+          {renderView()}
+        </main>
+      </div>
 
       <MiniPlayer
         song={app.selectedSong}
         isPlaying={app.isPlaying}
         onTogglePlay={app.togglePlay}
         onClose={app.closePlayer}
+        onNext={app.playNextSong}
+        onPrev={app.playPrevSong}
       />
     </div>
   )
 }
+
