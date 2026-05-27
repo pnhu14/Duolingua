@@ -1,4 +1,8 @@
 import {
+  HeartIcon as HeartOutlineIcon,
+} from '@heroicons/react/24/outline'
+import {
+  HeartIcon as HeartSolidIcon,
   InformationCircleIcon,
   MusicalNoteIcon,
   PlayIcon,
@@ -11,6 +15,8 @@ interface SongCardProps {
   onPlay: (song: Song) => void
   onOpenDetail?: (song: Song) => void
   onOpenArtist?: (artistId: string) => void
+  onToggleLike?: (song: Song) => void
+  isLiked?: boolean
   compact?: boolean
 }
 
@@ -32,7 +38,15 @@ function PlaceholderCover() {
   )
 }
 
-export default function SongCard({ song, onPlay, onOpenDetail, onOpenArtist, compact = false }: SongCardProps) {
+export default function SongCard({
+  song,
+  onPlay,
+  onOpenDetail,
+  onOpenArtist,
+  onToggleLike,
+  isLiked = false,
+  compact = false,
+}: SongCardProps) {
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -65,6 +79,24 @@ export default function SongCard({ song, onPlay, onOpenDetail, onOpenArtist, com
         ) : (
           <PlaceholderCover />
         )}
+
+        {onToggleLike ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onToggleLike(song)
+            }}
+            className={`absolute right-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-lg backdrop-blur-md transition-all duration-200 ${
+              isLiked
+                ? 'border-red-400/30 bg-red-500 text-white hover:bg-red-600'
+                : 'border-white/10 bg-black/45 text-white hover:bg-black/70'
+            }`}
+            aria-label={isLiked ? `Bỏ yêu thích ${song.title}` : `Yêu thích ${song.title}`}
+          >
+            {isLiked ? <HeartSolidIcon className="h-4.5 w-4.5" /> : <HeartOutlineIcon className="h-4.5 w-4.5" />}
+          </button>
+        ) : null}
 
         {/* Play Button Overlay on Hover */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
