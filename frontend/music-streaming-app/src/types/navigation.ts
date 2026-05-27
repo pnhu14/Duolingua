@@ -3,3 +3,4 @@ export type View =
   | { name: 'artists' }
   | { name: 'songDetail'; id: string }
   | { name: 'artistDetail'; id: string }
+  | { name: 'login' }

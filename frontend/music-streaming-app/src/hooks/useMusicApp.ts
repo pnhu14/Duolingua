@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { Artist, Song, SongDetail } from '../types'
+import type { Artist, Song, SongDetail, User, LoginRequest, RegisterRequest } from '../types'
 import type { View } from '../types/navigation'
 import { api } from '../services/api'
 import { hashToView, viewToHash } from '../utils/navigation'
@@ -17,6 +17,8 @@ export function useMusicApp() {
   const [activeArtist, setActiveArtist] = useState<Artist | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(false)
 
   const navigate = useCallback((nextView: View) => {
     const nextHash = viewToHash(nextView)
@@ -27,6 +29,68 @@ export function useMusicApp() {
 
     window.location.hash = nextHash
   }, [])
+
+  // Khôi phục phiên đăng nhập khi load trang
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken')
+    if (token) {
+      api.getMe()
+        .then((user) => setCurrentUser(user))
+        .catch((err) => {
+          console.error('Session restore failed:', err)
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('refreshToken')
+        })
+    }
+  }, [])
+
+  const handleLogin = useCallback(async (credentials: LoginRequest) => {
+    try {
+      setAuthLoading(true)
+      const data = await api.login(credentials)
+      setCurrentUser(data.user)
+      navigate({ name: 'home' })
+      return { success: true }
+    } catch (err: unknown) {
+      console.error('Login error:', err)
+      const message = err instanceof Error ? err.message : 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'
+      return { success: false, error: message }
+    } finally {
+      setAuthLoading(false)
+    }
+  }, [navigate])
+
+  const handleRegister = useCallback(async (details: RegisterRequest) => {
+    try {
+      setAuthLoading(true)
+      await api.register(details)
+      const loginData = await api.login({ email: details.email, password: details.password })
+      setCurrentUser(loginData.user)
+      navigate({ name: 'home' })
+      return { success: true }
+    } catch (err: unknown) {
+      console.error('Registration error:', err)
+      const message = err instanceof Error ? err.message : 'Đăng ký thất bại. Email hoặc Username có thể đã được sử dụng.'
+      return { success: false, error: message }
+    } finally {
+      setAuthLoading(false)
+    }
+  }, [navigate])
+
+  const handleLogout = useCallback(async () => {
+    try {
+      setAuthLoading(true)
+      await api.logout()
+    } catch (err) {
+      console.error('Logout error:', err)
+    } finally {
+      setCurrentUser(null)
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      navigate({ name: 'home' })
+      setAuthLoading(false)
+    }
+  }, [navigate])
 
   const loadSongs = useCallback(async () => {
     try {
@@ -168,6 +232,22 @@ export function useMusicApp() {
     setIsPlaying(false)
   }, [])
 
+  const playNextSong = useCallback(() => {
+    if (!selectedSong || songs.length === 0) return
+    const currentIndex = songs.findIndex((s) => s.id === selectedSong.id)
+    if (currentIndex === -1) return
+    const nextIndex = (currentIndex + 1) % songs.length
+    void handlePlaySong(songs[nextIndex])
+  }, [songs, selectedSong, handlePlaySong])
+
+  const playPrevSong = useCallback(() => {
+    if (!selectedSong || songs.length === 0) return
+    const currentIndex = songs.findIndex((s) => s.id === selectedSong.id)
+    if (currentIndex === -1) return
+    const prevIndex = (currentIndex - 1 + songs.length) % songs.length
+    void handlePlaySong(songs[prevIndex])
+  }, [songs, selectedSong, handlePlaySong])
+
   return {
     activeArtist,
     activeSongDetail,
@@ -189,5 +269,12 @@ export function useMusicApp() {
     songs,
     togglePlay,
     view,
+    currentUser,
+    authLoading,
+    handleLogin,
+    handleRegister,
+    handleLogout,
+    playNextSong,
+    playPrevSong,
   }
 }

@@ -20,10 +20,10 @@ export default function SearchBar({ onSearch, placeholder = 'Tìm kiếm bài h�
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
+    <form onSubmit={handleSubmit} className="w-full max-w-md">
       <div className="relative">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-          <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+          <MagnifyingGlassIcon className="w-4 h-4 text-zinc-500" />
         </div>
 
         <input
@@ -31,16 +31,16 @@ export default function SearchBar({ onSearch, placeholder = 'Tìm kiếm bài h�
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-12 pr-12 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+          className="w-full pl-10 pr-10 py-2 bg-zinc-900/60 border border-zinc-800/80 rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-red-500/50 focus:border-red-500/50 focus:bg-zinc-900 transition-all text-sm duration-300 shadow-inner"
         />
 
         {query && (
           <button
             type="button"
             onClick={handleClear}
-            className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-zinc-500 hover:text-zinc-300 transition-colors duration-200"
           >
-            <XMarkIcon className="w-5 h-5" />
+            <XMarkIcon className="w-4 h-4" />
           </button>
         )}
       </div>
