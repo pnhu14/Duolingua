@@ -1,23 +1,24 @@
 import { useState } from 'react'
 import {
-  MusicalNoteIcon,
-  UserGroupIcon,
-  HeartIcon,
-  ClockIcon,
   ArrowDownTrayIcon,
   CalendarIcon,
-  RectangleStackIcon,
+  ClockIcon,
   FilmIcon,
+  HeartIcon,
   MicrophoneIcon,
+  MusicalNoteIcon,
+  RectangleStackIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline'
 import type { View } from '../types/navigation'
 
 interface SidebarProps {
   currentView: View
+  isAuthenticated: boolean
   onNavigate: (view: View) => void
 }
 
-export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
+export default function Sidebar({ currentView, isAuthenticated, onNavigate }: SidebarProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   const showMockToast = (featureName: string) => {
@@ -68,25 +69,29 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
       name: 'Favourite',
       label: 'Yêu thích',
       icon: HeartIcon,
-      action: () => showMockToast('Danh sách yêu thích'),
+      action: () => onNavigate(isAuthenticated ? { name: 'likedSongs' } : { name: 'login' }),
+      active: currentView.name === 'likedSongs',
     },
     {
       name: 'Play History',
       label: 'Lịch sử phát',
       icon: ClockIcon,
       action: () => showMockToast('Lịch sử phát'),
+      active: false,
     },
     {
       name: 'Download Items',
       label: 'Tải xuống',
       icon: ArrowDownTrayIcon,
       action: () => showMockToast('Tải xuống'),
+      active: false,
     },
     {
       name: 'Events',
       label: 'Sự kiện',
       icon: CalendarIcon,
       action: () => showMockToast('Sự kiện'),
+      active: false,
     },
   ]
 
@@ -98,14 +103,12 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
 
   return (
     <aside className="w-64 flex-shrink-0 bg-zinc-950 border-r border-zinc-900 flex flex-col h-full text-zinc-400 select-none z-20">
-      {/* Brand Logo & Cassette Theme */}
       <div className="p-6 border-b border-zinc-900/60">
         <button
           type="button"
           onClick={() => onNavigate({ name: 'home' })}
           className="flex items-center space-x-3 text-left focus:outline-none w-full group"
         >
-          {/* Cassette Icon Design inspired by red theme in UI */}
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500/10 border border-red-500/20 p-2 shadow-inner group-hover:scale-105 transition-transform duration-300">
             <svg
               className="h-5 w-5 text-red-500 animate-pulse"
@@ -131,9 +134,7 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
         </button>
       </div>
 
-      {/* Navigation Menus */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-7 scrollbar-thin">
-        {/* Main Menu */}
         <div className="space-y-2">
           <p className="px-3 text-[10px] font-bold tracking-[0.2em] text-zinc-600 uppercase">Menu</p>
           <nav className="space-y-1">
@@ -154,7 +155,6 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
           </nav>
         </div>
 
-        {/* Sub Menu */}
         <div className="space-y-2">
           <p className="px-3 text-[10px] font-bold tracking-[0.2em] text-zinc-600 uppercase">Sub Menu</p>
           <nav className="space-y-1">
@@ -162,16 +162,19 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
               <button
                 key={item.name}
                 onClick={item.action}
-                className="flex w-full items-center space-x-3.5 rounded-xl px-3.5 py-3 text-sm font-semibold transition-all duration-200 hover:bg-zinc-900/30 hover:text-zinc-200 cursor-pointer"
+                className={`flex w-full items-center space-x-3.5 rounded-xl px-3.5 py-3 text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                  item.active
+                    ? 'bg-zinc-900 text-white shadow-md shadow-black/20'
+                    : 'hover:bg-zinc-900/30 hover:text-zinc-200'
+                }`}
               >
-                <item.icon className="h-5 w-5 text-zinc-500" />
+                <item.icon className={`h-5 w-5 ${item.active ? 'text-red-500' : 'text-zinc-500'}`} />
                 <span>{item.label}</span>
               </button>
             ))}
           </nav>
         </div>
 
-        {/* Playlists */}
         <div className="space-y-2">
           <p className="px-3 text-[10px] font-bold tracking-[0.2em] text-zinc-600 uppercase">My Playlist</p>
           <div className="space-y-1">
@@ -189,7 +192,6 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
         </div>
       </div>
 
-      {/* Floating Mock Toast Alert */}
       {toastMessage && (
         <div className="absolute bottom-24 left-6 z-50 rounded-xl bg-zinc-900 border border-zinc-800 p-3.5 text-xs text-white shadow-2xl backdrop-blur-md max-w-[220px] animate-fadeIn">
           <div className="flex items-center space-x-2">

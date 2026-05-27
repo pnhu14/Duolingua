@@ -8,8 +8,11 @@ export function useMusicApp() {
   const [view, setView] = useState<View>(() => hashToView())
   const [songs, setSongs] = useState<Song[]>([])
   const [artists, setArtists] = useState<Artist[]>([])
+  const [likedSongs, setLikedSongs] = useState<Song[]>([])
+  const [likedSongIds, setLikedSongIds] = useState<Set<string>>(() => new Set())
   const [loading, setLoading] = useState(true)
   const [artistsLoading, setArtistsLoading] = useState(false)
+  const [likedSongsLoading, setLikedSongsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSong, setSelectedSong] = useState<SongDetail | null>(null)
@@ -85,6 +88,8 @@ export function useMusicApp() {
       console.error('Logout error:', err)
     } finally {
       setCurrentUser(null)
+      setLikedSongs([])
+      setLikedSongIds(new Set())
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       navigate({ name: 'home' })
@@ -116,6 +121,25 @@ export function useMusicApp() {
     }
   }, [])
 
+  const loadLikedSongs = useCallback(async () => {
+    if (!currentUser) {
+      setLikedSongs([])
+      setLikedSongIds(new Set())
+      return
+    }
+
+    try {
+      setLikedSongsLoading(true)
+      const nextLikedSongs = await api.getLikedSongs()
+      setLikedSongs(nextLikedSongs)
+      setLikedSongIds(new Set(nextLikedSongs.map((song) => song.id)))
+    } catch (err) {
+      console.error('Error loading liked songs:', err)
+    } finally {
+      setLikedSongsLoading(false)
+    }
+  }, [currentUser])
+
   useEffect(() => {
     const handleHashChange = () => setView(hashToView())
     window.addEventListener('hashchange', handleHashChange)
@@ -128,6 +152,12 @@ export function useMusicApp() {
       void loadArtists()
     })
   }, [loadArtists, loadSongs])
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadLikedSongs()
+    })
+  }, [loadLikedSongs])
 
   useEffect(() => {
     let cancelled = false
@@ -219,6 +249,49 @@ export function useMusicApp() {
     }
   }, [])
 
+  const handleToggleLike = useCallback(
+    async (song: Song) => {
+      if (!currentUser) {
+        navigate({ name: 'login' })
+        return
+      }
+
+      const wasLiked = likedSongIds.has(song.id)
+      const previousLikedSongs = likedSongs
+      const previousLikedSongIds = likedSongIds
+
+      setLikedSongs((current) =>
+        wasLiked
+          ? current.filter((item) => item.id !== song.id)
+          : [song, ...current.filter((item) => item.id !== song.id)],
+      )
+      setLikedSongIds((current) => {
+        const next = new Set(current)
+        if (wasLiked) {
+          next.delete(song.id)
+        } else {
+          next.add(song.id)
+        }
+        return next
+      })
+
+      try {
+        if (wasLiked) {
+          await api.unlikeSong(song.id)
+        } else {
+          const likedSong = await api.likeSong(song.id)
+          setLikedSongs((current) => [likedSong, ...current.filter((item) => item.id !== likedSong.id)])
+          setLikedSongIds((current) => new Set(current).add(likedSong.id))
+        }
+      } catch (err) {
+        setLikedSongs(previousLikedSongs)
+        setLikedSongIds(previousLikedSongIds)
+        console.error('Error toggling liked song:', err)
+      }
+    },
+    [currentUser, likedSongIds, likedSongs, navigate],
+  )
+
   const goBack = useCallback(() => {
     navigate(view.name === 'artistDetail' ? { name: 'artists' } : { name: 'home' })
   }, [navigate, view.name])
@@ -260,8 +333,12 @@ export function useMusicApp() {
     goBack,
     handlePlaySong,
     handleSearch,
+    handleToggleLike,
     isPlaying,
     loadSongs,
+    likedSongIds,
+    likedSongs,
+    likedSongsLoading,
     loading,
     navigate,
     searchQuery,
