@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   HeartIcon as HeartOutlineIcon,
 } from '@heroicons/react/24/outline'
@@ -47,6 +48,8 @@ export default function SongCard({
   isLiked = false,
   compact = false,
 }: SongCardProps) {
+  const [showLikeBurst, setShowLikeBurst] = useState(false)
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -85,16 +88,27 @@ export default function SongCard({
             type="button"
             onClick={(event) => {
               event.stopPropagation()
+              if (!isLiked) {
+                setShowLikeBurst(true)
+                window.setTimeout(() => setShowLikeBurst(false), 620)
+              }
               onToggleLike(song)
             }}
             className={`absolute right-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full border shadow-lg backdrop-blur-md transition-all duration-200 ${
               isLiked
-                ? 'border-red-400/30 bg-red-500 text-white hover:bg-red-600'
+                ? 'border-red-500/40 bg-zinc-950/85 text-red-500 shadow-red-500/25 ring-2 ring-red-500/20 hover:border-red-400/60 hover:bg-zinc-900'
                 : 'border-white/10 bg-black/45 text-white hover:bg-black/70'
             }`}
             aria-label={isLiked ? `Bỏ yêu thích ${song.title}` : `Yêu thích ${song.title}`}
           >
-            {isLiked ? <HeartSolidIcon className="h-4.5 w-4.5" /> : <HeartOutlineIcon className="h-4.5 w-4.5" />}
+            {isLiked ? (
+              <HeartSolidIcon className="h-4.5 w-4.5 animate-[liked-heart_360ms_ease-out]" />
+            ) : (
+              <HeartOutlineIcon className="h-4.5 w-4.5" />
+            )}
+            {showLikeBurst ? (
+              <HeartSolidIcon className="pointer-events-none absolute h-4.5 w-4.5 text-red-500 animate-[float-heart_620ms_ease-out_forwards]" />
+            ) : null}
           </button>
         ) : null}
 

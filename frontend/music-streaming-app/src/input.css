@@ -1,5 +1,36 @@
 @import "tailwindcss";
 
+@keyframes liked-heart {
+  0% {
+    transform: scale(0.72);
+  }
+
+  55% {
+    transform: scale(1.28);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes float-heart {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.7);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.25);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-42px) scale(1);
+  }
+}
+
 @utility no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
