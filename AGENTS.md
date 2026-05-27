@@ -116,8 +116,8 @@ A blank line between the subject and body is required; without it, git tooling c
 **Subject**
 - Use the imperative mood: "add", "fix", "remove"; not "added" or "fixes".
 - Use lowercase text and no trailing period.
-- Keep a hard limit of 100 characters, including `type(scope):`. Shorter is better.
-- If the subject is close to 100 characters, split the commit instead of adding "and", "with", or "also".
+- Keep a hard limit of 120 characters, including `type(scope):`. Shorter is better.
+- If the subject is close to 120 characters, split the commit instead of adding "and", "with", or "also".
 
 **Body** (optional)
 - Explain *why*, not *what*. The diff already shows *what* changed.
