@@ -4,6 +4,7 @@ import com.musicapp.backend.dto.AccessTokenResponse;
 import com.musicapp.backend.dto.AuthResponse;
 import com.musicapp.backend.dto.LoginRequest;
 import com.musicapp.backend.dto.LogoutRequest;
+import com.musicapp.backend.dto.OAuth2UserInfo;
 import com.musicapp.backend.dto.RefreshTokenRequest;
 import com.musicapp.backend.dto.RegisterRequest;
 import com.musicapp.backend.dto.UserResponse;
@@ -40,6 +41,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthService {
 
   private static final String DEFAULT_ROLE = "USER";
+  private static final String GOOGLE_PASSWORD_PREFIX = "google-oauth2:";
   private static final int REFRESH_TOKEN_BYTES = 48;
 
   private final SecureRandom secureRandom = new SecureRandom();
@@ -117,6 +119,43 @@ public class AuthService {
   }
 
   @Transactional
+  public AuthResponse loginWithGoogle(
+      OAuth2UserInfo oauth2User, HttpServletRequest servletRequest) {
+    String email = normalizeEmail(requireOAuth2Email(oauth2User));
+    if (!Boolean.TRUE.equals(oauth2User.emailVerified())) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Google email is not verified");
+    }
+
+    User user =
+        userRepository
+            .findByEmailIgnoreCase(email)
+            .orElseGet(() -> createGoogleUser(email, oauth2User));
+
+    if (!"ACTIVE".equals(user.getStatus())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User account is not active");
+    }
+
+    if (StringUtils.hasText(oauth2User.picture())) {
+      user.setAvatarUrl(oauth2User.picture());
+    }
+    if (user.getEmailVerifiedAt() == null) {
+      user.setEmailVerifiedAt(Instant.now());
+    }
+    user.setLastLoginAt(Instant.now());
+
+    List<String> roles = userRoleRepository.findRoleCodesByUserId(user.getId());
+    String accessToken = jwtUtil.generateAccessToken(user, roles);
+    String refreshToken = issueRefreshToken(user, servletRequest);
+
+    return new AuthResponse(
+        accessToken,
+        refreshToken,
+        "Bearer",
+        jwtUtil.getAccessTokenTtlSeconds(),
+        UserResponse.from(user, roles));
+  }
+
+  @Transactional
   public AccessTokenResponse refresh(RefreshTokenRequest request) {
     RefreshToken refreshToken =
         refreshTokenRepository
@@ -170,6 +209,65 @@ public class AuthService {
     refreshTokenRepository.save(refreshToken);
 
     return token;
+  }
+
+  private User createGoogleUser(String email, OAuth2UserInfo oauth2User) {
+    Instant now = Instant.now();
+    User user = new User();
+    user.setUsername(generateGoogleUsername(email));
+    user.setEmail(email);
+    user.setPasswordHash(passwordEncoder.encode(GOOGLE_PASSWORD_PREFIX + UUID.randomUUID()));
+    user.setDisplayName(resolveGoogleDisplayName(email, oauth2User));
+    user.setAvatarUrl(oauth2User.picture());
+    user.setStatus("ACTIVE");
+    user.setRegistrationDate(now);
+    user.setEmailVerifiedAt(now);
+    User savedUser = userRepository.save(user);
+
+    Role userRole =
+        roleRepository
+            .findByCode(DEFAULT_ROLE)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR, "Default USER role is not configured"));
+    UserRole userRoleLink = new UserRole();
+    userRoleLink.setUser(savedUser);
+    userRoleLink.setRole(userRole);
+    userRoleRepository.save(userRoleLink);
+
+    return savedUser;
+  }
+
+  private String generateGoogleUsername(String email) {
+    String localPart = email.substring(0, email.indexOf('@')).replaceAll("[^a-zA-Z0-9_]", "_");
+    String baseUsername = StringUtils.hasText(localPart) ? localPart : "google_user";
+    if (baseUsername.length() > 90) {
+      baseUsername = baseUsername.substring(0, 90);
+    }
+    String username = baseUsername;
+    int suffix = 1;
+
+    while (userRepository.existsByUsernameIgnoreCase(username)) {
+      username = baseUsername + suffix;
+      suffix++;
+    }
+
+    return username;
+  }
+
+  private String resolveGoogleDisplayName(String email, OAuth2UserInfo oauth2User) {
+    return StringUtils.hasText(oauth2User.name())
+        ? oauth2User.name()
+        : email.substring(0, email.indexOf('@'));
+  }
+
+  private String requireOAuth2Email(OAuth2UserInfo oauth2User) {
+    if (!StringUtils.hasText(oauth2User.email())) {
+      throw new ResponseStatusException(
+          HttpStatus.UNAUTHORIZED, "Google account does not include email");
+    }
+    return oauth2User.email();
   }
 
   private String generateOpaqueToken() {
