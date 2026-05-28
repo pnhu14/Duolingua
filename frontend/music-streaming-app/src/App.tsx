@@ -16,6 +16,7 @@ export default function App() {
       <LoginView
         onLogin={app.handleLogin}
         onRegister={app.handleRegister}
+        onGoogleLogin={app.handleGoogleLogin}
         isLoading={app.authLoading}
         onNavigate={app.navigate}
       />
