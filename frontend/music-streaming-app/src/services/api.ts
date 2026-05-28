@@ -152,6 +152,10 @@ export const api = {
     return authData
   },
 
+  loginWithGoogle(): void {
+    window.location.href = `${API_BASE_URL.replace('/api', '')}/oauth2/authorization/google`
+  },
+
   async register(payload: RegisterRequest): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
