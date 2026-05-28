@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   EnvelopeIcon,
@@ -10,23 +10,44 @@ import {
 } from '@heroicons/react/24/outline'
 import type { LoginRequest, RegisterRequest } from '../types'
 
+function readOAuthLoginError() {
+  const prefix = '#/login?'
+  if (!window.location.hash.startsWith(prefix)) {
+    return null
+  }
+
+  const params = new URLSearchParams(window.location.hash.slice(prefix.length))
+  const oauthError = params.get('oauthError')
+  return oauthError ? `Đăng nhập Google không thành công: ${oauthError}` : null
+}
+
 interface LoginViewProps {
   onLogin: (credentials: LoginRequest) => Promise<{ success: boolean; error?: string }>
   onRegister: (details: RegisterRequest) => Promise<{ success: boolean; error?: string }>
+  onGoogleLogin: () => void
   isLoading: boolean
   onNavigate: (view: { name: 'home' }) => void
 }
 
-export default function LoginView({ onLogin, onRegister, isLoading, onNavigate }: LoginViewProps) {
+export default function LoginView({ onLogin, onRegister, onGoogleLogin, isLoading, onNavigate }: LoginViewProps) {
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(() => readOAuthLoginError())
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
   // Form states
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+
+  useEffect(() => {
+    const prefix = '#/login?'
+    if (!window.location.hash.startsWith(prefix)) {
+      return
+    }
+
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/login`)
+  }, [])
 
   const handleModeChange = (newMode: 'signin' | 'signup' | 'forgot') => {
     setMode(newMode)
@@ -363,6 +384,7 @@ export default function LoginView({ onLogin, onRegister, isLoading, onNavigate }
                 <div className="grid grid-cols-1 gap-3">
                   <button
                     type="button"
+                    onClick={onGoogleLogin}
                     className="flex w-full items-center justify-center space-x-3 rounded-xl border border-zinc-800 bg-zinc-900/50 py-3 px-4 text-sm font-medium text-zinc-200 hover:bg-zinc-800 active:scale-98 transition-all duration-200"
                   >
                     {/* Google Logo */}
