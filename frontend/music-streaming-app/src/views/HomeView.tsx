@@ -12,19 +12,30 @@ interface HomeViewProps {
   loading: boolean
   error: string | null
   searchQuery: string
+  likedSongIds: Set<string>
   onRetry: () => void
   onPlaySong: (song: Song) => void
   onNavigate: (view: View) => void
+  onToggleLike: (song: Song) => void
 }
 
 interface ScrollableRowProps {
   title: string
   songs: Song[]
+  likedSongIds: Set<string>
   onPlaySong: (song: Song) => void
   onNavigate: (view: View) => void
+  onToggleLike: (song: Song) => void
 }
 
-function ScrollableRow({ title, songs, onPlaySong, onNavigate }: ScrollableRowProps) {
+function ScrollableRow({
+  title,
+  songs,
+  likedSongIds,
+  onPlaySong,
+  onNavigate,
+  onToggleLike,
+}: ScrollableRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [showLeft, setShowLeft] = useState(false)
   const [showRight, setShowRight] = useState(false)
@@ -108,6 +119,8 @@ function ScrollableRow({ title, songs, onPlaySong, onNavigate }: ScrollableRowPr
                 onPlay={onPlaySong}
                 onOpenDetail={() => onNavigate({ name: 'songDetail', id: song.id })}
                 onOpenArtist={(artistId) => onNavigate({ name: 'artistDetail', id: artistId })}
+                onToggleLike={onToggleLike}
+                isLiked={likedSongIds.has(song.id)}
                 compact={true}
               />
             </div>
@@ -123,9 +136,11 @@ export default function HomeView({
   loading,
   error,
   searchQuery,
+  likedSongIds,
   onRetry,
   onPlaySong,
   onNavigate,
+  onToggleLike,
 }: HomeViewProps) {
   if (loading) return <Loading />
   if (error) return <ErrorMessage message={error} onRetry={onRetry} />
@@ -162,6 +177,8 @@ export default function HomeView({
                 onPlay={onPlaySong}
                 onOpenDetail={() => onNavigate({ name: 'songDetail', id: song.id })}
                 onOpenArtist={(artistId) => onNavigate({ name: 'artistDetail', id: artistId })}
+                onToggleLike={onToggleLike}
+                isLiked={likedSongIds.has(song.id)}
                 compact={true}
               />
             ))}
@@ -174,16 +191,20 @@ export default function HomeView({
           <ScrollableRow
             title="Nổi bật hôm nay"
             songs={featuredSongs}
+            likedSongIds={likedSongIds}
             onPlaySong={onPlaySong}
             onNavigate={onNavigate}
+            onToggleLike={onToggleLike}
           />
 
           {/* Row 2: Bài hát gợi ý */}
           <ScrollableRow
             title="Bài hát gợi ý"
             songs={suggestedSongs}
+            likedSongIds={likedSongIds}
             onPlaySong={onPlaySong}
             onNavigate={onNavigate}
+            onToggleLike={onToggleLike}
           />
         </div>
       )}
