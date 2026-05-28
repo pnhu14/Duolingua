@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.musicapp.backend.dto.SongDto;
 import com.musicapp.backend.entity.User;
+import com.musicapp.backend.repository.SongRepository;
 import com.musicapp.backend.repository.UserRepository;
 import java.time.Instant;
 import java.util.List;
@@ -21,6 +22,8 @@ class LikedSongServiceIntegrationTests {
 
   @Autowired private UserRepository userRepository;
 
+  @Autowired private SongRepository songRepository;
+
   @Test
   void likesAndReturnsSongsForCurrentUser() {
     User user = new User();
@@ -32,7 +35,11 @@ class LikedSongServiceIntegrationTests {
     user.setRegistrationDate(Instant.now());
     User savedUser = userRepository.save(user);
 
-    UUID songId = UUID.fromString("40000000-0000-0000-0000-000000000001");
+    UUID songId =
+        songRepository
+            .findByDeletedAtIsNullAndTitleContainingIgnoreCaseOrderByTitleAsc("Lạc Trôi")
+            .get(0)
+            .getId();
 
     likedSongService.likeSong(savedUser.getId(), songId);
     List<SongDto> likedSongs = likedSongService.getLikedSongs(savedUser.getId());

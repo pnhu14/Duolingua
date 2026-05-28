@@ -1,0 +1,79 @@
+-- Replace numeric-looking seed song UUIDs with ordinary UUID values.
+-- The application already models song IDs as UUID; this migration only changes
+-- the deterministic seed IDs that looked like sequential numbers.
+
+BEGIN;
+
+ALTER TABLE song_artists DROP CONSTRAINT IF EXISTS fk_song_artists_song;
+ALTER TABLE song_artists
+    ADD CONSTRAINT fk_song_artists_song
+    FOREIGN KEY (song_id)
+    REFERENCES songs (song_id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+
+ALTER TABLE song_genres DROP CONSTRAINT IF EXISTS fk_song_genres_song;
+ALTER TABLE song_genres
+    ADD CONSTRAINT fk_song_genres_song
+    FOREIGN KEY (song_id)
+    REFERENCES songs (song_id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+
+ALTER TABLE playlist_tracks DROP CONSTRAINT IF EXISTS fk_playlist_tracks_song;
+ALTER TABLE playlist_tracks
+    ADD CONSTRAINT fk_playlist_tracks_song
+    FOREIGN KEY (song_id)
+    REFERENCES songs (song_id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+
+ALTER TABLE user_liked_songs DROP CONSTRAINT IF EXISTS fk_user_liked_songs_song;
+ALTER TABLE user_liked_songs
+    ADD CONSTRAINT fk_user_liked_songs_song
+    FOREIGN KEY (song_id)
+    REFERENCES songs (song_id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+
+ALTER TABLE play_history DROP CONSTRAINT IF EXISTS fk_play_history_song;
+ALTER TABLE play_history
+    ADD CONSTRAINT fk_play_history_song
+    FOREIGN KEY (song_id)
+    REFERENCES songs (song_id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+
+UPDATE songs AS s
+SET song_id = seed.new_id::uuid
+FROM (
+    VALUES
+        ('40000000-0000-0000-0000-000000000001', 'a4f1c2e3-9b8d-4f6a-b1c2-8d7e6f5a4b31'),
+        ('40000000-0000-0000-0000-000000000002', 'b7d2a9f4-6c3e-4a81-9f20-c5e4d3b2a190'),
+        ('40000000-0000-0000-0000-000000000003', 'c8e3b5a1-2f7d-4c9a-8b61-d4a7f2e9c530'),
+        ('40000000-0000-0000-0000-000000000004', 'd9a4c6b2-7e1f-4d3a-9c82-e5b8a3f0d641'),
+        ('40000000-0000-0000-0000-000000000005', 'e1b5d7c3-8f2a-4e4b-ad93-f6c9b4a1e752'),
+        ('40000000-0000-0000-0000-000000000006', 'f2c6e8d4-9a3b-4f5c-be04-a7d0c5b2f863'),
+        ('40000000-0000-0000-0000-000000000007', 'a3d7f9e5-0b4c-406d-8f15-b8e1d6c3a974'),
+        ('40000000-0000-0000-0000-000000000008', 'b4e8a1f6-1c5d-417e-9026-c9f2e7d4b085'),
+        ('40000000-0000-0000-0000-000000000009', 'c5f9b2a7-2d6e-428f-a137-d0a3f8e5c196'),
+        ('40000000-0000-0000-0000-000000000010', 'd6a0c3b8-3e7f-439a-b248-e1b4a9f6d207'),
+        ('40000000-0000-0000-0000-000000000011', 'e7b1d4c9-4f8a-44ab-8359-f2c5bae7e318'),
+        ('40000000-0000-0000-0000-000000000012', 'f8c2e5da-5a9b-45bc-946a-a3d6cbf8f429'),
+        ('40000000-0000-0000-0000-000000000013', 'a9d3f6eb-6bac-46cd-a57b-b4e7dc09a53a'),
+        ('40000000-0000-0000-0000-000000000014', 'bae407fc-7cbd-47de-b68c-c5f8ed1ab64b'),
+        ('40000000-0000-0000-0000-000000000015', 'cbf518ad-8dce-48ef-879d-d609fe2bc75c'),
+        ('40000000-0000-0000-0000-000000000016', 'dc0629be-9edf-49fa-98ae-e71a0f3cd86d'),
+        ('40000000-0000-0000-0000-000000000017', 'ed173acf-af01-4a0b-a9bf-f82b104de97e'),
+        ('40000000-0000-0000-0000-000000000018', 'fe284bd0-b012-4b1c-bad0-a93c215efa8f'),
+        ('40000000-0000-0000-0000-000000000019', 'af395ce1-c123-4c2d-8be1-ba4d326fab90'),
+        ('40000000-0000-0000-0000-000000000020', 'b04a6df2-d234-4d3e-9cf2-cb5e4370bca1'),
+        ('40000000-0000-0000-0000-000000000021', 'c15b7ea3-e345-4e4f-ad03-dc6f5481cdb2'),
+        ('40000000-0000-0000-0000-000000000022', 'd26c8fb4-f456-4f50-be14-ed705592dec3'),
+        ('40000000-0000-0000-0000-000000000023', 'e37d90c5-a567-4061-8f25-fe8166a3efd4'),
+        ('40000000-0000-0000-0000-000000000024', 'f48ea1d6-b678-4172-9036-af9277b40fe5'),
+        ('40000000-0000-0000-0000-000000000025', 'a59fb2e7-c789-4283-a147-b0a388c510f6')
+) AS seed(old_id, new_id)
+WHERE s.song_id = seed.old_id::uuid;
+
+COMMIT;
