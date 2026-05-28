@@ -1,8 +1,40 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { Artist, Song, SongDetail, User, LoginRequest, RegisterRequest } from '../types'
+import type { Artist, Song, SongDetail, User, LoginRequest, RegisterRequest, AuthResponse } from '../types'
 import type { View } from '../types/navigation'
 import { api } from '../services/api'
 import { hashToView, viewToHash } from '../utils/navigation'
+
+function decodeBase64Url(value: string) {
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = base64.padEnd(base64.length + (4 - (base64.length % 4 || 4)), '=')
+  return decodeURIComponent(
+    atob(padded)
+      .split('')
+      .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`)
+      .join(''),
+  )
+}
+
+function readOAuthCallbackAuth() {
+  const prefix = '#/auth/callback?'
+  if (!window.location.hash.startsWith(prefix)) {
+    return null
+  }
+
+  const params = new URLSearchParams(window.location.hash.slice(prefix.length))
+  const auth = params.get('auth')
+  if (auth) {
+    return JSON.parse(decodeBase64Url(auth)) as AuthResponse
+  }
+
+  const accessToken = params.get('accessToken')
+  const refreshToken = params.get('refreshToken')
+  if (!accessToken || !refreshToken) {
+    return null
+  }
+
+  return { accessToken, refreshToken, user: null }
+}
 
 export function useMusicApp() {
   const [view, setView] = useState<View>(() => hashToView())
@@ -32,6 +64,26 @@ export function useMusicApp() {
 
   // Khôi phục phiên đăng nhập khi load trang
   useEffect(() => {
+    const oauthAuth = readOAuthCallbackAuth()
+    if (oauthAuth) {
+      localStorage.setItem('accessToken', oauthAuth.accessToken)
+      localStorage.setItem('refreshToken', oauthAuth.refreshToken)
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/`)
+
+      if (oauthAuth.user) {
+        Promise.resolve(oauthAuth.user).then((user) => setCurrentUser(user))
+      } else {
+        api.getMe()
+          .then((user) => setCurrentUser(user))
+          .catch((err) => {
+            console.error('Google session restore failed:', err)
+            localStorage.removeItem('accessToken')
+            localStorage.removeItem('refreshToken')
+          })
+      }
+      return
+    }
+
     const token = localStorage.getItem('accessToken')
     if (token) {
       api.getMe()
@@ -42,6 +94,10 @@ export function useMusicApp() {
           localStorage.removeItem('refreshToken')
         })
     }
+  }, [])
+
+  const handleGoogleLogin = useCallback(() => {
+    api.loginWithGoogle()
   }, [])
 
   const handleLogin = useCallback(async (credentials: LoginRequest) => {
@@ -272,6 +328,7 @@ export function useMusicApp() {
     currentUser,
     authLoading,
     handleLogin,
+    handleGoogleLogin,
     handleRegister,
     handleLogout,
     playNextSong,
