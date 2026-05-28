@@ -3,6 +3,16 @@ import { normalizeArtist, normalizeArtists, normalizeSong, normalizeSongs } from
 
 const API_BASE_URL = 'http://localhost:8080/api'
 
+interface LikedSongStatusResponse {
+  liked: boolean
+}
+
+interface AccessTokenResponse {
+  accessToken: string
+  tokenType: string
+  expiresInSeconds: number
+}
+
 function getHeaders(extraHeaders: Record<string, string> = {}): HeadersInit {
   const headers: Record<string, string> = {
     ...extraHeaders,
@@ -12,6 +22,51 @@ function getHeaders(extraHeaders: Record<string, string> = {}): HeadersInit {
     headers['Authorization'] = `Bearer ${token}`
   }
   return headers
+}
+
+async function refreshAccessToken(): Promise<boolean> {
+  const refreshToken = localStorage.getItem('refreshToken')
+  if (!refreshToken) return false
+
+  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  })
+
+  if (!response.ok) {
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    return false
+  }
+
+  const token = await response.json() as AccessTokenResponse
+  localStorage.setItem('accessToken', token.accessToken)
+  return true
+}
+
+async function fetchWithAuth(
+  url: string,
+  init: RequestInit & { headers?: Record<string, string> } = {},
+): Promise<Response> {
+  const response = await fetch(url, {
+    ...init,
+    headers: getHeaders(init.headers),
+  })
+
+  if (response.status !== 401) {
+    return response
+  }
+
+  const refreshed = await refreshAccessToken()
+  if (!refreshed) {
+    return response
+  }
+
+  return fetch(url, {
+    ...init,
+    headers: getHeaders(init.headers),
+  })
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -77,6 +132,33 @@ export const api = {
       headers: getHeaders(),
     })
     return handleResponse<void>(response)
+  },
+
+  async getLikedSongs(): Promise<Song[]> {
+    const response = await fetchWithAuth(`${API_BASE_URL}/me/liked-songs`)
+    const songs = await handleResponse<Song[]>(response)
+    return normalizeSongs(songs)
+  },
+
+  async likeSong(id: string): Promise<Song> {
+    const response = await fetchWithAuth(`${API_BASE_URL}/me/liked-songs/${id}`, {
+      method: 'POST',
+    })
+    const song = await handleResponse<Song>(response)
+    return normalizeSong(song)
+  },
+
+  async unlikeSong(id: string): Promise<void> {
+    const response = await fetchWithAuth(`${API_BASE_URL}/me/liked-songs/${id}`, {
+      method: 'DELETE',
+    })
+    return handleResponse<void>(response)
+  },
+
+  async isSongLiked(id: string): Promise<boolean> {
+    const response = await fetchWithAuth(`${API_BASE_URL}/me/liked-songs/${id}`)
+    const status = await handleResponse<LikedSongStatusResponse>(response)
+    return status.liked
   },
 
   async getAllArtists(): Promise<Artist[]> {
@@ -167,9 +249,9 @@ export const api = {
 
   async logout(): Promise<void> {
     const refreshToken = localStorage.getItem('refreshToken')
-    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/auth/logout`, {
       method: 'POST',
-      headers: getHeaders({ 'Content-Type': 'application/json' }),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
     })
     localStorage.removeItem('accessToken')
@@ -178,9 +260,7 @@ export const api = {
   },
 
   async getMe(): Promise<User> {
-    const response = await fetch(`${API_BASE_URL}/me`, {
-      headers: getHeaders(),
-    })
+    const response = await fetchWithAuth(`${API_BASE_URL}/me`)
     return handleResponse<User>(response)
   },
 }

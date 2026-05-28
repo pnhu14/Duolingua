@@ -1,4 +1,6 @@
-import { ArrowLeftIcon, CalendarDaysIcon, ClockIcon, MusicalNoteIcon, PlayIcon } from '@heroicons/react/24/solid'
+import { useState } from 'react'
+import { HeartIcon as HeartOutlineIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, CalendarDaysIcon, ClockIcon, HeartIcon as HeartSolidIcon, MusicalNoteIcon, PlayIcon } from '@heroicons/react/24/solid'
 import type { SongDetail } from '../types'
 import type { View } from '../types/navigation'
 import CoverArt from '../components/CoverArt'
@@ -9,18 +11,24 @@ import { formatDate, formatDuration } from '../utils/format'
 interface SongDetailViewProps {
   song: SongDetail | null
   loading: boolean
+  isLiked: boolean
   onBack: () => void
   onPlaySong: (song: SongDetail) => void
   onNavigate: (view: View) => void
+  onToggleLike: (song: SongDetail) => void
 }
 
 export default function SongDetailView({
   song,
   loading,
+  isLiked,
   onBack,
   onPlaySong,
   onNavigate,
+  onToggleLike,
 }: SongDetailViewProps) {
+  const [showLikeBurst, setShowLikeBurst] = useState(false)
+
   if (loading && !song) return <Loading />
   if (!song) return <EmptyState message="Không tìm thấy bài hát" />
 
@@ -55,6 +63,31 @@ export default function SongDetailView({
               >
                 <PlayIcon className="h-5 w-5" />
                 Phát bài hát
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isLiked) {
+                    setShowLikeBurst(true)
+                    window.setTimeout(() => setShowLikeBurst(false), 620)
+                  }
+                  onToggleLike(song)
+                }}
+                className={`relative inline-flex items-center gap-2 rounded-full border px-6 py-3 text-sm font-bold shadow-lg transition-colors ${
+                  isLiked
+                    ? 'border-red-500/40 bg-zinc-950/80 text-red-400 shadow-red-500/20 ring-2 ring-red-500/15 hover:border-red-400/60 hover:bg-zinc-900'
+                    : 'border-white/20 text-white/90 hover:bg-white/10'
+                }`}
+              >
+                {isLiked ? (
+                  <HeartSolidIcon className="h-5 w-5 animate-[liked-heart_360ms_ease-out]" />
+                ) : (
+                  <HeartOutlineIcon className="h-5 w-5" />
+                )}
+                {showLikeBurst ? (
+                  <HeartSolidIcon className="pointer-events-none absolute left-6 h-5 w-5 text-red-500 animate-[float-heart_620ms_ease-out_forwards]" />
+                ) : null}
+                {isLiked ? 'Đã yêu thích' : 'Yêu thích'}
               </button>
               {song.artist?.id ? (
                 <button

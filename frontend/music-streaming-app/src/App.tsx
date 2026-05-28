@@ -5,6 +5,7 @@ import { useMusicApp } from './hooks/useMusicApp'
 import ArtistDetailView from './views/ArtistDetailView'
 import ArtistsView from './views/ArtistsView'
 import HomeView from './views/HomeView'
+import LikedSongsView from './views/LikedSongsView'
 import SongDetailView from './views/SongDetailView'
 import LoginView from './views/LoginView'
 
@@ -40,9 +41,24 @@ export default function App() {
         <SongDetailView
           song={app.activeSongDetail}
           loading={app.detailLoading}
+          isLiked={app.activeSongDetail ? app.likedSongIds.has(app.activeSongDetail.id) : false}
           onBack={app.goBack}
           onPlaySong={app.handlePlaySong}
           onNavigate={app.navigate}
+          onToggleLike={app.handleToggleLike}
+        />
+      )
+    }
+
+    if (app.view.name === 'likedSongs') {
+      return (
+        <LikedSongsView
+          songs={app.likedSongs}
+          likedSongIds={app.likedSongIds}
+          loading={app.likedSongsLoading}
+          onPlaySong={app.handlePlaySong}
+          onNavigate={app.navigate}
+          onToggleLike={app.handleToggleLike}
         />
       )
     }
@@ -66,9 +82,11 @@ export default function App() {
         loading={app.loading}
         error={app.error}
         searchQuery={app.searchQuery}
+        likedSongIds={app.likedSongIds}
         onRetry={app.loadSongs}
         onPlaySong={app.handlePlaySong}
         onNavigate={app.navigate}
+        onToggleLike={app.handleToggleLike}
       />
     )
   }
@@ -76,7 +94,11 @@ export default function App() {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100 select-none">
       {/* Left Sidebar */}
-      <Sidebar currentView={app.view} onNavigate={app.navigate} />
+      <Sidebar
+        currentView={app.view}
+        isAuthenticated={Boolean(app.currentUser)}
+        onNavigate={app.navigate}
+      />
 
       {/* Right Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-zinc-900/40 backdrop-blur-md">
@@ -106,4 +128,3 @@ export default function App() {
     </div>
   )
 }
-

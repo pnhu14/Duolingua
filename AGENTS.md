@@ -97,7 +97,11 @@ JWT-related overrides:
 - `JWT_ACCESS_TOKEN_MINUTES`
 - `REFRESH_TOKEN_DAYS`
 
-Do not commit real secrets, production connection strings, private keys, or real OAuth client secrets.
+**Subject**
+- Use the imperative mood: "add", "fix", "remove"; not "added" or "fixes".
+- Use lowercase text and no trailing period.
+- Keep a hard limit of 120 characters, including `type(scope):`. Shorter is better.
+- If the subject is close to 120 characters, split the commit instead of adding "and", "with", or "also".
 
 ## 7. Testing Guidelines
 
