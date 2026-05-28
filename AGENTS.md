@@ -1,102 +1,131 @@
-# AGENTS.md
-
 # Repository Guidelines
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+Behavioral and project-specific instructions for contributors and coding agents working in this repository.
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+These guidelines favor small, verifiable changes over speed. For trivial tasks, use judgment, but do not skip verification when behavior changes.
 
-## 1. Think Before Coding
-
-**Do not assume. Do not hide confusion. Surface tradeoffs.**
+## 1. Working Style
 
 Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them; do not pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what is confusing. Ask.
-
-## 2. Simplicity First
-
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that was not requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-
-## 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
+- State assumptions when the request is ambiguous.
+- Ask before choosing between materially different interpretations.
+- Prefer the simplest change that solves the requested problem.
+- Push back on speculative features, broad refactors, or abstractions that are not needed.
 
 When editing existing code:
-- Do not "improve" adjacent code, comments, or formatting.
-- Do not refactor things that are not broken.
-- Match existing style, even if you would do it differently.
-- If you notice unrelated dead code, mention it; do not delete it.
+- Touch only files required by the task.
+- Match the local style, package structure, naming, and patterns.
+- Do not clean up unrelated code.
+- Remove only unused imports, variables, or helpers introduced by your own change.
+- Keep every changed line traceable to the request.
 
-When your changes create orphans:
-- Remove imports, variables, and functions that your changes made unused.
-- Do not remove pre-existing dead code unless asked.
+For multi-step work, use a short goal-driven plan:
 
-The test: every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" -> "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" -> "Write a test that reproduces it, then make it pass"
-- "Refactor X" -> "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-
-```
+```text
 1. [Step] -> verify: [check]
 2. [Step] -> verify: [check]
 3. [Step] -> verify: [check]
 ```
 
-Strong success criteria let you loop independently. Weak criteria such as "make it work" require constant clarification.
+## 2. Project Structure
 
-**These guidelines are working if:** diffs contain fewer unnecessary changes, fewer rewrites are caused by overcomplication, and clarifying questions come before implementation rather than after mistakes.
+This repository is split into two active apps:
 
-## 5. Project Structure & Module Organization
+- `backend/music-streaming-app`: Spring Boot backend. Java source lives in `src/main/java/com/musicapp/backend` with `config`, `controller`, `dto`, `entity`, `mapper`, `repository`, `security`, `service`, and `tool` packages. Resources live in `src/main/resources`. Tests live in `src/test/java`.
+- `frontend/music-streaming-app`: React + TypeScript + Vite frontend. UI code lives in `src`, with `components`, `views`, `hooks`, `services`, `types`, `utils`, `data`, and `assets` directories. Static files live in `public`.
 
-This repository is split into two apps:
+Backend database files:
+- Forward Flyway migrations: `backend/music-streaming-app/src/main/resources/db/migration`.
+- Local rollback scripts: `backend/music-streaming-app/src/main/resources/db/undo`.
+- Legacy/reference SQL snapshots: `backend/music-streaming-app/src/main/resources/db/reference`.
 
-- `backend/music`: Spring Boot backend. Java source lives in `src/main/java/com/musicapp/backend` with `config`, `controller`, `dto`, `entity`, `mapper`, `repository`, and `service` packages. Resources are in `src/main/resources`; forward database migrations live in `db/migration`, rollback scripts for the local migration tool live in `db/undo`, and legacy SQL snapshots stay under `db/reference`. Tests live in `src/test/java`.
-- `frontend/music/music-streaming-app`: React + TypeScript frontend. Main UI code is in `src`, shared assets are in `src/assets`, and static public files are in `public`.
-- Root-level SQL files such as `seed_data.sql` are helper scripts and are not part of the active backend startup path.
+## 3. Build, Test, and Development Commands
 
-## 6. Build, Test, and Development Commands
+Use these commands from the repository root unless noted.
 
-- Backend run: `cd backend/music && .\mvnw.cmd spring-boot:run`
-- Backend compile: `cd backend/music && .\mvnw.cmd compile`
-- Backend format: `cd backend/music && .\mvnw.cmd spotless:apply`
-- Backend format check: `cd backend/music && .\mvnw.cmd spotless:check`
-- Backend test: `cd backend/music && .\mvnw.cmd test`
-- Frontend dev server: `cd frontend/music/music-streaming-app && bun run dev`
-- Frontend build: `cd frontend/music/music-streaming-app && bun run build`
-- Frontend lint: `cd frontend/music/music-streaming-app && bun run lint`
+Backend:
+- Run: `cd backend/music-streaming-app && .\mvnw.cmd spring-boot:run`
+- Compile: `cd backend/music-streaming-app && .\mvnw.cmd compile`
+- Format: `cd backend/music-streaming-app && .\mvnw.cmd spotless:apply`
+- Format check: `cd backend/music-streaming-app && .\mvnw.cmd spotless:check`
+- Test: `cd backend/music-streaming-app && .\mvnw.cmd test`
+
+Frontend:
+- Dev server: `cd frontend/music-streaming-app && bun run dev`
+- Build: `cd frontend/music-streaming-app && bun run build`
+- Lint: `cd frontend/music-streaming-app && bun run lint`
+- Preview build: `cd frontend/music-streaming-app && bun run preview`
 
 Use `bun` for frontend package scripts.
 
-## 7. Coding Style & Naming Conventions
+## 4. Backend Guidelines
 
-- Backend Java must follow Google Java Format and should be formatted with `.\mvnw.cmd spotless:apply` before commit. Keep Java package names lowercase and class names `PascalCase` (`SongController`, `SongService`). Use `camelCase` for Java fields and methods. Frontend uses 2 spaces in TypeScript/TSX; component files should stay in `src/components` and use `PascalCase.tsx`. Frontend linting is enforced with ESLint via `eslint.config.js`.
+- Java code must follow Google Java Format. Run `.\mvnw.cmd spotless:apply` before committing backend Java changes.
+- Package names stay lowercase. Class names use `PascalCase`; fields and methods use `camelCase`.
+- Keep controllers thin. Put business logic in services, persistence in repositories, mapping in mappers, and security-specific wiring in `security` or `config`.
+- Public API routes currently live under `/api`, including auth, me, songs, artists, and albums.
+- Authentication uses JWT access tokens, refresh tokens, and Google OAuth2 login. Keep OAuth handlers in `security` and user/session creation in `AuthService`.
+- Do not let Hibernate manage schema changes. Keep `spring.jpa.hibernate.ddl-auto=none`; schema and seed changes must go through Flyway migrations.
+- Every forward migration in `db/migration` should have a matching rollback script in `db/undo` when practical.
+
+## 5. Frontend Guidelines
+
+- Frontend code uses React, TypeScript, Vite, Tailwind CSS, Framer Motion, and Heroicons.
+- Use 2 spaces in TypeScript/TSX.
+- Component files should stay in `src/components` or `src/views` and use `PascalCase.tsx`.
+- API calls belong in `src/services/api.ts`; app-level state and workflows belong in hooks such as `src/hooks/useMusicApp.ts`.
+- Keep route/hash parsing in navigation utilities or clearly named local helpers.
+- Auth state is stored in `localStorage` using `accessToken` and `refreshToken`. Keep token persistence consistent with existing `api.ts` and `useMusicApp.ts` patterns.
+- There is no frontend test runner configured yet. At minimum, run `bun run lint` and `bun run build` for frontend changes.
+
+## 6. Configuration and Security
+
+Backend defaults to PostgreSQL at `localhost:5432/music_db`.
+
+Expected local environment variables are documented in `backend/music-streaming-app/.env.example`:
+- `DB_HOST`
+- `DB_PORT`
+- `DB_NAME`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `FRONTEND_URL`
+
+JWT-related overrides:
+- `JWT_SECRET`
+- `JWT_ACCESS_TOKEN_MINUTES`
+- `REFRESH_TOKEN_DAYS`
+
+Do not commit real secrets, production connection strings, private keys, or real OAuth client secrets.
+
+## 7. Testing Guidelines
+
+Backend tests use JUnit 5 with Spring Boot test support. Name test classes `*Tests.java` and place them under `backend/music-streaming-app/src/test/java`.
+
+Run backend tests with:
+
+```text
+cd backend/music-streaming-app && .\mvnw.cmd test
+```
+
+For database-dependent backend tests, expect a local PostgreSQL database matching the configured environment.
+
+For frontend changes, run:
+
+```text
+cd frontend/music-streaming-app && bun run lint && bun run build
+```
+
+If a verification command cannot be run, state exactly why.
 
 ## 8. Commit Conventions
 
-**Conventional Commits, atomic, no bundling.**
+Use Conventional Commits. Keep commits atomic and do not bundle backend and frontend changes together.
 
-**Format**
+Format:
 
-```
+```text
 <type>(<scope>): <subject>
 
 <body, optional>
@@ -104,77 +133,37 @@ Use `bun` for frontend package scripts.
 <footer, optional>
 ```
 
-A blank line between the subject and body is required; without it, git tooling can parse the message incorrectly.
+Types:
+- `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `style`, `perf`, `build`, `ci`
 
-**Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `style`, `perf`, `build`, `ci`.
+Scopes:
+- Use `front-end` or `back-end` for app-specific changes.
+- Use sub-scopes for specific modules or layers, such as `front-end/auth`, `back-end/auth`, `back-end/repository/song`, or `back-end/migration`.
+- Use cross-cutting scopes such as `deps`, `ci`, `docs`, or `config` only when the change is not owned by one app.
 
-**Scope**
-- Top-level: use `front-end` or `back-end`, spelled out fully; do not use `fe` or `be`.
-- Sub-scope: use the specific module, component, or layer name, separated by `/`. Examples: `front-end/expense-editor`, `back-end/handlers`, `back-end/repository/expense`.
-- Cross-cutting: use a single scope such as `deps`, `ci`, `docs`, or `config`.
-
-**Subject**
-- Use the imperative mood: "add", "fix", "remove"; not "added" or "fixes".
+Subject:
+- Use imperative mood: `add`, `fix`, `remove`, `update`.
 - Use lowercase text and no trailing period.
-- Keep a hard limit of 100 characters, including `type(scope):`. Shorter is better.
-- If the subject is close to 100 characters, split the commit instead of adding "and", "with", or "also".
+- Keep the full subject under 100 characters.
 
-**Body** (optional)
-- Explain *why*, not *what*. The diff already shows *what* changed.
-- Wrap each line at about 72 characters so `git log` stays readable. Leave long URLs and paths as-is.
-- Include a body for bug fixes, breaking changes, non-obvious decisions that need justification, and issue or PR references.
-- Skip the body when the diff is self-explanatory, such as a variable rename, formatting-only change, or simple field addition.
+Atomic commit rules:
+- Split by domain: backend and frontend must be separate commits.
+- Split by layer when the changes can stand alone: migration, entity, repository, service, controller, frontend API, frontend UI.
+- Split by intent: dependency/config changes, refactors, behavior changes, tests, and formatting should be separate when practical.
+- File moves or renames should be their own commit before content changes.
 
-**Atomic commits: splitting is required**
+Examples:
 
-One commit equals one logical change. Do not bundle multiple changes into one commit, even when they support the same feature.
-
-Split commits by these axes:
-- **By layer:** model -> repository -> service -> handler -> route should be five separate commits.
-- **By domain:** backend and frontend must never be in the same commit.
-- **By intent:** separate refactors from features. Separate formatting or renames from logic changes. Separate adding a dependency from using it.
-- **By supporting file operation:** file renames get their own commit. File moves get their own commit before content changes.
-
-Test: if the subject needs "and", "with", or "also" to describe the change, the commit is doing too much and should be split.
-
-**Example: adding a `note` field to Expense**
-
-```
-feat(back-end/models): add Note field to Expense
-feat(back-end/repository): persist Note in Create and Update
-feat(back-end/handlers): accept note in expense request DTO
-feat(front-end/lib): include note in expense API payloads
-feat(front-end/expense-editor): add note textarea to form
+```text
+build(back-end/auth): add google oauth client config
+feat(back-end/auth): authenticate google oauth users
+feat(back-end/auth): wire google oauth login handlers
+feat(front-end/auth): add google login redirect
+feat(front-end/auth): restore google oauth session
+feat(front-end/auth): connect google login button
 ```
 
-That is five commits, not one.
-
-**Example commit with a body**
-
-```
-fix(back-end/repository): return ErrExpenseNotFound for missing rows
-
-GORM's First() returns gorm.ErrRecordNotFound which leaks
-ORM details to the service layer. Wrap it in a domain error
-so handlers can map to 404 without importing gorm.
-
-Closes #47
-```
-
-**When splitting is not required**
-- Renaming one symbol and updating its callers is one change.
-- Fixing a typo in one file is one change.
-- Fixing an issue introduced by the immediately previous commit in the same PR can use `--amend` if it has not been pushed.
-
-**Before committing**
-- Backend: `go fmt ./... && go test ./...`
-- Frontend: `bun run lint && bun run build`
-- The diff should be readable in 60 seconds. If not, split it further.
-
-## 9. Testing Guidelines
-
-Backend tests use JUnit 5 with Spring Boot test support. Name test classes `*Tests.java` and place them under `backend/music/src/test/java`. Run them with `.\mvnw.cmd test`. There is no frontend test runner configured yet; at minimum, contributors should run `bun run build` and `bun run lint` before opening a PR.
-
-## 10. Security & Configuration Tips
-
-Backend defaults to PostgreSQL on `localhost:5432/music_db`. Prefer environment variables such as `DB_USERNAME` and `DB_PASSWORD` over hardcoding credentials. Spring SQL bootstrap is disabled; schema changes and seed evolution should go through Flyway versioned migrations such as `V1__create_core_tables.sql`, with matching rollback scripts in `db/undo` such as `U1__create_core_tables.sql`. Do not commit real secrets or production connection strings.
+Before committing:
+- Backend changes: run `.\mvnw.cmd spotless:apply` when Java changed, then `.\mvnw.cmd test`.
+- Frontend changes: run `bun run lint` and `bun run build`.
+- Confirm `git diff --cached` contains only the intended logical change.
