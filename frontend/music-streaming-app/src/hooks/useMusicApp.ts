@@ -286,7 +286,11 @@ export function useMusicApp() {
   const handlePlaySong = useCallback(async (song: Song) => {
     try {
       setDetailLoading(true)
-      setSelectedSong(await api.getSong(song.id))
+      const [songDetail, streamUrl] = await Promise.all([
+        api.getSong(song.id),
+        api.getSongStreamUrl(song.id),
+      ])
+      setSelectedSong({ ...songDetail, audioUrl: streamUrl })
       setIsPlaying(true)
     } catch (err) {
       console.error('Error loading song detail:', err)
