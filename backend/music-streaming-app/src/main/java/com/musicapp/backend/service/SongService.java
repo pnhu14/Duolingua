@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,7 @@ public class SongService {
 
   private final SongRepository songRepository;
   private final AlbumRepository albumRepository;
+  private final R2StorageService r2StorageService;
 
   @Transactional(readOnly = true)
   public List<SongDto> getSongs(String title) {
@@ -47,10 +49,39 @@ public class SongService {
 
   @Transactional(readOnly = true)
   public SongDetailDto getSong(UUID id) {
-    return songRepository
-        .findByIdAndDeletedAtIsNull(id)
-        .map(SongDetailMapper::toDto)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found"));
+    return SongDetailMapper.toDto(findPublishedSong(id));
+  }
+
+  @Transactional(readOnly = true)
+  public SongDetailDto getSong(String identifier) {
+    return SongDetailMapper.toDto(findPublishedSong(identifier));
+  }
+
+  @Transactional(readOnly = true)
+  public String getSongStreamUrl(UUID id) {
+    Song song = findPublishedSong(id);
+
+    return r2StorageService.createReadUrl(song.getAudioUrl());
+  }
+
+  @Transactional(readOnly = true)
+  public String getSongStreamUrl(String identifier) {
+    Song song = findPublishedSong(identifier);
+
+    return r2StorageService.createReadUrl(song.getAudioUrl());
+  }
+
+  @Transactional(readOnly = true)
+  public SongAudioStream streamSong(String identifier, String range) {
+    Song song = findPublishedSong(identifier);
+
+    var stream = r2StorageService.openReadStream(song.getAudioUrl(), normalizeRange(range));
+    GetObjectResponse response = stream.response();
+    return new SongAudioStream(
+        stream,
+        resolveAudioContentType(song.getAudioUrl(), response.contentType()),
+        response.contentLength(),
+        response.contentRange());
   }
 
   @Transactional
@@ -146,5 +177,61 @@ public class SongService {
     }
 
     return normalized;
+  }
+
+  private Song findPublishedSong(UUID id) {
+    return songRepository
+        .findByIdAndDeletedAtIsNull(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found"));
+  }
+
+  private Song findPublishedSong(String identifier) {
+    if (!StringUtils.hasText(identifier)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found");
+    }
+
+    try {
+      return findPublishedSong(UUID.fromString(identifier.trim()));
+    } catch (IllegalArgumentException ignored) {
+      return songRepository
+          .findBySlugAndDeletedAtIsNull(identifier.trim())
+          .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Song not found"));
+    }
+  }
+
+  private String normalizeRange(String range) {
+    if (!StringUtils.hasText(range)) {
+      return null;
+    }
+
+    String normalized = range.trim();
+    if (!normalized.startsWith("bytes=") || normalized.contains(",")) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid audio range header");
+    }
+
+    return normalized;
+  }
+
+  private String resolveAudioContentType(String audioUrl, String storedContentType) {
+    if (StringUtils.hasText(storedContentType)) {
+      return storedContentType;
+    }
+
+    if (audioUrl == null) {
+      return "application/octet-stream";
+    }
+
+    String normalized = audioUrl.toLowerCase();
+    if (normalized.endsWith(".wav")) {
+      return "audio/wav";
+    }
+    if (normalized.endsWith(".mp3")) {
+      return "audio/mpeg";
+    }
+    if (normalized.endsWith(".ogg")) {
+      return "audio/ogg";
+    }
+
+    return "application/octet-stream";
   }
 }
