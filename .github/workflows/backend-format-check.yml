@@ -3,7 +3,7 @@ name: Backend Format Check
 on:
   pull_request:
     paths:
-      - "backend/music/**"
+      - "backend/music-streaming-app/**"
       - ".github/workflows/backend-format-check.yml"
 
 permissions:
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend/music
+        working-directory: backend/music-streaming-app
 
     steps:
       - name: Checkout repository

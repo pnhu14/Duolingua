@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   PlayIcon,
   PauseIcon,
@@ -26,31 +26,45 @@ export default function MiniPlayer({
   onNext,
   onPrev,
 }: MiniPlayerProps) {
+  const audioRef = useRef<HTMLAudioElement>(null)
   const [progress, setProgress] = useState(0)
   const [volume, setVolume] = useState(70)
+  const [duration, setDuration] = useState(0)
+  const [playbackError, setPlaybackError] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setProgress(0)
+      setDuration(song?.durationSeconds ?? 0)
+      setPlaybackError(null)
     }, 0)
     return () => clearTimeout(timer)
-  }, [song?.id])
+  }, [song?.durationSeconds, song?.id])
 
   useEffect(() => {
-    if (!isPlaying || !song) return
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= song.durationSeconds) {
-          if (onNext) {
-            onNext() // Auto play next when song finishes
-          }
-          return 0
-        }
-        return prev + 1
-      })
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [isPlaying, song, onNext])
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100
+    }
+  }, [volume])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || !song) return
+
+    if (isPlaying) {
+      const playPromise = audio.play()
+      if (playPromise) {
+        playPromise.catch((error) => {
+          console.error('Audio playback failed:', error)
+          setPlaybackError('Khong the phat file audio nay')
+          onTogglePlay()
+        })
+      }
+      return
+    }
+
+    audio.pause()
+  }, [isPlaying, onTogglePlay, song])
 
   if (!song) return null
 
@@ -63,20 +77,44 @@ export default function MiniPlayer({
     return `${mins}:${s.toString().padStart(2, '0')}`
   }
 
-  const percentage = song.durationSeconds > 0 ? (progress / song.durationSeconds) * 100 : 0
+  const effectiveDuration = duration || song.durationSeconds
+  const percentage = effectiveDuration > 0 ? (progress / effectiveDuration) * 100 : 0
 
   const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!song.durationSeconds) return
+    if (!effectiveDuration) return
     const rect = e.currentTarget.getBoundingClientRect()
     const clickX = e.clientX - rect.left
     const width = rect.width
     const clickPercentage = clickX / width
-    const newProgress = Math.floor(clickPercentage * song.durationSeconds)
-    setProgress(Math.max(0, Math.min(newProgress, song.durationSeconds)))
+    const newProgress = Math.max(0, Math.min(clickPercentage * effectiveDuration, effectiveDuration))
+    if (audioRef.current) {
+      audioRef.current.currentTime = newProgress
+    }
+    setProgress(Math.floor(newProgress))
   }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 h-20 bg-zinc-950/95 border-t border-zinc-900 backdrop-blur-xl z-50 flex items-center justify-between px-8 text-white select-none">
+      <audio
+        ref={audioRef}
+        src={song.audioUrl}
+        preload="metadata"
+        onLoadedMetadata={(event) => {
+          const nextDuration = event.currentTarget.duration
+          if (Number.isFinite(nextDuration)) {
+            setDuration(Math.floor(nextDuration))
+          }
+        }}
+        onTimeUpdate={(event) => setProgress(Math.floor(event.currentTarget.currentTime))}
+        onEnded={() => {
+          setProgress(0)
+          if (onNext) {
+            onNext()
+          }
+        }}
+        onError={() => setPlaybackError('Khong the tai file audio')}
+      />
+
       {/* 1. Left Section: Track Details & Rotating Cover Art */}
       <div className="flex items-center space-x-3.5 w-1/4 min-w-[200px]">
         <div
@@ -98,6 +136,9 @@ export default function MiniPlayer({
             {song.title}
           </h3>
           <p className="truncate text-xs text-zinc-400 font-semibold mt-0.5">{artistName}</p>
+          {playbackError ? (
+            <p className="truncate text-[10px] font-semibold text-red-400 mt-0.5">{playbackError}</p>
+          ) : null}
         </div>
       </div>
 
@@ -150,7 +191,7 @@ export default function MiniPlayer({
               className="absolute inset-y-0 left-0 bg-green-500 rounded-full h-1 group-hover:bg-green-400 transition-all duration-150"
             />
           </div>
-          <span>{formatTime(song.durationSeconds)}</span>
+          <span>{formatTime(effectiveDuration)}</span>
         </div>
       </div>
 

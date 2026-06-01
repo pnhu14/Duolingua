@@ -106,6 +106,10 @@ export const api = {
     return normalizeSong(song)
   },
 
+  async getSongStreamUrl(id: string): Promise<string> {
+    return `${API_BASE_URL}/songs/${id}/stream`
+  },
+
   async createSong(payload: SongPayload): Promise<SongDetail> {
     const response = await fetch(`${API_BASE_URL}/songs`, {
       method: 'POST',
